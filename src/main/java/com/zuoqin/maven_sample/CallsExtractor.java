@@ -1,4 +1,4 @@
-package com.yourorganization.maven_sample;
+package com.zuoqin.maven_sample;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Some code that uses JavaParser.
  */
-public class LogicPositivizer {
+public class CallsExtractor {
     public static void main(String[] args) {
         // JavaParser has a minimal logging class that normally logs nothing.
         // Let's ask it to write to standard out:
@@ -32,7 +32,7 @@ public class LogicPositivizer {
         // SourceRoot is a tool that read and writes Java files from packages on a certain root directory.
         // In this case the root directory is found by taking the root from the current Maven module,
         // with src/main/resources appended.
-        SourceRoot sourceRoot = new SourceRoot(CodeGenerationUtils.mavenModuleRoot(LogicPositivizer.class).resolve("src/main/resources"));
+        SourceRoot sourceRoot = new SourceRoot(CodeGenerationUtils.mavenModuleRoot(CallsExtractor.class).resolve("src/main/resources"));
 
         // Our sample is in the root of this directory, so no package name.
         CompilationUnit cu = sourceRoot.parse("", "Blabla.java");
@@ -72,7 +72,7 @@ public class LogicPositivizer {
         // This saves all the files we just read to an output directory.  
         sourceRoot.saveAll(
                 // The path of the Maven module/project which contains the LogicPositivizer class.
-                CodeGenerationUtils.mavenModuleRoot(LogicPositivizer.class)
+                CodeGenerationUtils.mavenModuleRoot(CallsExtractor.class)
                         // appended with a path to "output"
                         .resolve(Paths.get("output")));
     }
