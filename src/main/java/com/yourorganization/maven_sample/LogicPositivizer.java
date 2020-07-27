@@ -1,7 +1,12 @@
 package com.yourorganization.maven_sample;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
@@ -9,8 +14,11 @@ import com.github.javaparser.ast.visitor.Visitable;
 import com.github.javaparser.utils.CodeGenerationUtils;
 import com.github.javaparser.utils.Log;
 import com.github.javaparser.utils.SourceRoot;
+import jdk.nashorn.internal.ir.FunctionNode;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Some code that uses JavaParser.
@@ -30,27 +38,33 @@ public class LogicPositivizer {
         CompilationUnit cu = sourceRoot.parse("", "Blabla.java");
 
         Log.info("Positivizing!");
-        
+
+        HashMap<String, String[]> hm = new HashMap<String, String[]>();
+        cu.findAll(MethodDeclaration.class).stream()
+                .filter(f->f.isPrivate())
+                .forEach(f -> {
+                    NodeList <Parameter> theParams = f.getParameters();
+                    String[] names = new String[theParams.size()];
+                    for(int k=0; k<theParams.size(); k++ ){
+                        names[k] = "ID:"+ theParams.get(k).getName().asString();
+                        System.out.println("11111    " + names[k]);
+                    }
+
+                    hm.put(f.getName().asString(), names);
+                });
+        System.out.println(hm);
+        if(1==1){
+            return;
+        }
         cu.accept(new ModifierVisitor<Void>() {
             /**
              * For every if-statement, see if it has a comparison using "!=".
              * Change it to "==" and switch the "then" and "else" statements around.
              */
             @Override
-            public Visitable visit(IfStmt n, Void arg) {
-                // Figure out what to get and what to cast simply by looking at the AST in a debugger! 
-                n.getCondition().ifBinaryExpr(binaryExpr -> {
-                    if (binaryExpr.getOperator() == BinaryExpr.Operator.NOT_EQUALS && n.getElseStmt().isPresent()) {
-                        /* It's a good idea to clone nodes that you move around.
-                            JavaParser (or you) might get confused about who their parent is!
-                        */
-                        Statement thenStmt = n.getThenStmt().clone();
-                        Statement elseStmt = n.getElseStmt().get().clone();
-                        n.setThenStmt(elseStmt);
-                        n.setElseStmt(thenStmt);
-                        binaryExpr.setOperator(BinaryExpr.Operator.EQUALS);
-                    }
-                });
+            public Visitable visit(MethodCallExpr n, Void arg) {
+                System.out.println(n.getScope() + " - " + n.getName());
+
                 return super.visit(n, arg);
             }
         }, null);
