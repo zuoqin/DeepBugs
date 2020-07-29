@@ -20,9 +20,27 @@
     </properties>
 
     <dependencies>
-
-
-
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <version>1.0.0</version>
+            <systemPath>${pom.basedir}/../javasymbolsolver-maven-sample/libraries/javaparser-symbol-solver-core-3.16.1.jar</systemPath>
+            <scope>system</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>1.0.0</version>
+            <systemPath>${pom.basedir}/../javasymbolsolver-maven-sample/libraries/javaparser-core-3.16.1.jar</systemPath>
+            <scope>system</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1.7</version>
+            <systemPath>${pom.basedir}/../javasymbolsolver-maven-sample/libraries/json-simple-1.1.1.7.jar</systemPath>
+            <scope>system</scope>
+        </dependency>
     </dependencies>
 
     <!-- This blob of configuration tells Maven to make the jar executable. You can run it with:

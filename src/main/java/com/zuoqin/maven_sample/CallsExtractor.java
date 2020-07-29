@@ -1,38 +1,25 @@
 package com.zuoqin.maven_sample;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
-import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.stmt.IfStmt;
-import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
 import com.github.javaparser.ast.visitor.Visitable;
-import com.github.javaparser.utils.CodeGenerationUtils;
-import com.github.javaparser.utils.Log;
-import com.github.javaparser.utils.SourceRoot;
-import jdk.nashorn.internal.ir.FunctionNode;
-import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.github.javaparser.utils.Log;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 
