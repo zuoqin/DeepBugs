@@ -3,6 +3,7 @@ package com.zuoqin.maven_sample;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
@@ -16,13 +17,14 @@ import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
 import com.github.javaparser.ast.visitor.Visitable;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.javaparser.utils.CodeGenerationUtils;
 import com.github.javaparser.utils.Log;
 import com.github.javaparser.utils.SourceRoot;
 import jdk.nashorn.internal.ir.FunctionNode;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -92,19 +94,25 @@ public class CallsExtractor {
 
         //SourceRoot sourceRoot = new SourceRoot(CodeGenerationUtils.mavenModuleRoot(CallsExtractor.class).resolve("src/main/resources"));
 
+        // Set up a minimal type solver that only looks at the classes used to run this sample.
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        combinedTypeSolver.add(new ReflectionTypeSolver());
 
+        // Configure JavaParser to use type resolution
+        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
+        StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
         File file = new File("D:\\Data\\javaparser-maven-sample\\src\\main\\resources\\Blabla.java");
 
-        ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
-        JavaParser jp = new JavaParser(config);
-        ParseResult<CompilationUnit> pcu = jp.parse(file);
-        CompilationUnit cu;
-        if (pcu.isSuccessful() && pcu.getResult().isPresent()) {
-            cu = pcu.getResult().get();
-        } else {
-            Log.error(String.format("解析 newFileSource 失败， " + pcu.getProblem(0).toString()));
-            return;
-        }
+        //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
+        //JavaParser jp = new JavaParser(config);
+        //ParseResult<CompilationUnit> pcu = jp.parse(file);
+        CompilationUnit cu = StaticJavaParser.parse(file);
+//        if (pcu.isSuccessful() && pcu.getResult().isPresent()) {
+//            cu = pcu.getResult().get();
+//        } else {
+//            Log.error(String.format("解析 newFileSource 失败， " + pcu.getProblem(0).toString()));
+//            return;
+//        }
         Log.info("Positivizing!");
 
         HashMap<String, String[]> hm = new HashMap<String, String[]>();
