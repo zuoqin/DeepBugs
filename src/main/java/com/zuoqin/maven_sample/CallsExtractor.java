@@ -24,45 +24,68 @@ import java.util.Optional;
 
 
 public class CallsExtractor {
-    public static JSONObject getNameOfASTNode(com.github.javaparser.ast.Node node) {
+    public static JSONObject getNameOfASTNode(com.github.javaparser.ast.Node node, String pathname) {
         JSONObject res = new JSONObject();
-        Optional<Node> parent = node.getParentNode();
+        MethodCallExpr expr1 = (MethodCallExpr) node;
+
+        res.put("src", pathname + " : " + node.getRange().get().begin.line + " - " +
+                node.getRange().get().end.line);
         System.out.println(node.getBegin());
 //        if (parent.toString().contains("." + node.)){
 //
 //        }
         System.out.println("2222 " + node.getClass().getName() + "; " + node);
         JSONArray args = new JSONArray();
+        JSONArray argTypes = new JSONArray();
+        for(int o=0; o<expr1.getArguments().size(); o++){
+            argTypes.add(expr1.getArguments().get(o).calculateResolvedType().describe());
+            if(expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.StringLiteralExpr" ||
+                    expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.IntegerLiteralExpr"
+            ){
+                String arg = expr1.getArguments().get(o).toString();
+                args.add("LIT:" + arg);
+            }
+            else if(expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.NameExpr"){
+                NameExpr expr = (NameExpr) expr1.getArguments().get(o);
+                //System.out.println(childNode);
+                String arg = expr.calculateResolvedType().describe();
+                args.add("ID:" + expr1.getArguments().get(o).toString());
+            }
+
+        }
+        res.put("argumentTypes", argTypes);
         for(int j=0; j<node.getChildNodes().size(); j++){
             System.out.println(node.getChildNodes().get(j).getClass().getName());
-            if(node.getChildNodes().get(j).getClass().getName() == "com.github.javaparser.ast.expr.SimpleName") {
-                if (j > 0 && node.getChildNodes().get(j - 1).getClass().getName() == "com.github.javaparser.ast.expr.NameExpr") {
-                    res.put("base", "ID:" + node.getChildNodes().get(j - 1).toString());
-                    res.put("callee", "ID:" + node.getChildNodes().get(j).toString());
+            Node previousNode = null;
+            if (j > 0){
+                previousNode = node.getChildNodes().get(j-1);
+            }
+            Node childNode = node.getChildNodes().get(j);
+            if(childNode.getClass().getName() == "com.github.javaparser.ast.expr.SimpleName") {
+                if (j > 0 && previousNode.getClass().getName() == "com.github.javaparser.ast.expr.NameExpr") {
+                    res.put("base", "ID:" + previousNode.toString());
+                    res.put("callee", "ID:" + childNode.toString());
                     res.put("calleeLocation", "88888");
                 } else{
                     res.put("base", "");
-                    res.put("callee", "ID:" + node.getChildNodes().get(j).toString());
+                    res.put("callee", "ID:" + childNode.toString());
                     res.put("calleeLocation", "7777");
                 }
             }
-            if(node.getChildNodes().get(j).getClass().getName() == "com.github.javaparser.ast.expr.StringLiteralExpr" ||
-                    node.getChildNodes().get(j).getClass().getName() == "com.github.javaparser.ast.expr.IntegerLiteralExpr"
-            ){
-                String arg = node.toString();
-                args.add("LIT:" + arg);
-            }
-            if(node.getChildNodes().get(j).getClass().getName() == "com.github.javaparser.ast.expr.NameExpr"){
-                NameExpr expr = (NameExpr) node.getChildNodes().get(j);
-                System.out.println(node.getChildNodes().get(j));
-                String arg = expr.calculateResolvedType().toString();
-                args.add("LIT:" + arg);
-            }
+
+//            if(childNode.getClass().getName() == "com.github.javaparser.ast.expr.StringLiteralExpr" ||
+//                    childNode.getClass().getName() == "com.github.javaparser.ast.expr.IntegerLiteralExpr"
+//            ){
+//                String arg = childNode.toString();
+//                args.add("LIT:" + arg);
+//            }
+
             res.put("arguments", args);
             //System.out.println(j + "; " + node.getChildNodes().get(j) + "; " + node.getChildNodes().get(j).getClass().getName());
         }
+        res.put("filename", pathname);
         System.out.println(res.toString());
-        if (node.getClass().getName() == "MethodCallExpr") return getNameOfASTNode(null);
+        if (node.getClass().getName() == "MethodCallExpr") return getNameOfASTNode(null, pathname);
         //if (node.getClass().getSimpleName() == "MemberExpression") return getNameOfASTNode(node.object);
         //if (node.getClass().getSimpleName() == "MemberExpression") return getNameOfASTNode(node.property);
         //if (node.getClass().getSimpleName() == "Literal") return "LIT:" + String(node.value);
@@ -88,7 +111,8 @@ public class CallsExtractor {
         // Configure JavaParser to use type resolution
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
-        File file = new File("D:\\Data\\javaparser-maven-sample\\src\\main\\resources\\Blabla.java");
+        String pathname = "D:\\Data\\javaparser-maven-sample\\src\\main\\resources\\Blabla.java";
+        File file = new File(pathname);
 
         //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
         //JavaParser jp = new JavaParser(config);
@@ -122,7 +146,7 @@ public class CallsExtractor {
                 .forEach(f -> {
                     JSONObject jo = new JSONObject();
                     jo.put("base", "");
-                    jo.put("callee", getNameOfASTNode(f));
+                    jo.put("callee", getNameOfASTNode(f, pathname));
                     ja.add(jo);
                 });
 
