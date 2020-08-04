@@ -16,14 +16,14 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import com.github.javaparser.utils.Log;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.Optional;
+import java.io.*;
+import java.util.*;
 
 
 public class CallsExtractor {
+    private static FileWriter callfile;
     public static JSONObject getNameOfASTNode(com.github.javaparser.ast.Node node, String pathname) {
         JSONObject res = new JSONObject();
         MethodCallExpr expr1 = (MethodCallExpr) node;
@@ -54,6 +54,7 @@ public class CallsExtractor {
 
         }
         res.put("argumentTypes", argTypes);
+        res.put("arguments", args);
         for(int j=0; j<node.getChildNodes().size(); j++){
             System.out.println(node.getChildNodes().get(j).getClass().getName());
             Node previousNode = null;
@@ -79,8 +80,6 @@ public class CallsExtractor {
 //                String arg = childNode.toString();
 //                args.add("LIT:" + arg);
 //            }
-
-            res.put("arguments", args);
             //System.out.println(j + "; " + node.getChildNodes().get(j) + "; " + node.getChildNodes().get(j).getClass().getName());
         }
         res.put("filename", pathname);
@@ -91,7 +90,7 @@ public class CallsExtractor {
         //if (node.getClass().getSimpleName() == "Literal") return "LIT:" + String(node.value);
         //if (node.getClass().getSimpleName() == "ThisExpression") return "LIT:this";
         //if (node.getClass().getSimpleName() == "UpdateExpression") return getNameOfASTNode(node.argument);
-        return new JSONObject();
+        return res;
     }
     public static void main(String[] args) throws FileNotFoundException {
         // JavaParser has a minimal logging class that normally logs nothing.
@@ -111,7 +110,7 @@ public class CallsExtractor {
         // Configure JavaParser to use type resolution
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
-        String pathname = "D:\\Data\\javaparser-maven-sample\\src\\main\\resources\\Blabla.java";
+        String pathname = "src\\main\\resources\\Blabla.java";
         File file = new File(pathname);
 
         //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
@@ -124,33 +123,105 @@ public class CallsExtractor {
 //            Log.error(String.format("解析 newFileSource 失败， " + pcu.getProblem(0).toString()));
 //            return;
 //        }
-        Log.info("Positivizing!");
 
-        HashMap<String, String[]> hm = new HashMap<String, String[]>();
-        cu.findAll(MethodDeclaration.class).stream()
-                .filter(f->f.isPrivate())
-                .forEach(f -> {
-                    NodeList <Parameter> theParams = f.getParameters();
-                    String[] names = new String[theParams.size()];
-                    for(int k=0; k<theParams.size(); k++ ){
-                        names[k] = "ID:"+ theParams.get(k).getName().asString();
-                        System.out.println("11111    " + names[k]);
-                    }
-
-                    hm.put(f.getName().asString(), names);
-                });
-        System.out.println(hm);
+//        HashMap<String, String[]> hm = new HashMap<String, String[]>();
+//        cu.findAll(MethodDeclaration.class).stream()
+//                .filter(f->f.isPrivate())
+//                .forEach(f -> {
+//                    NodeList <Parameter> theParams = f.getParameters();
+//                    String[] names = new String[theParams.size()];
+//                    for(int k=0; k<theParams.size(); k++ ){
+//                        names[k] = "ID:"+ theParams.get(k).getName().asString();
+//                        System.out.println("11111    " + names[k]);
+//                    }
+//
+//                    hm.put(f.getName().asString(), names);
+//                });
+//        System.out.println(hm);
         JSONArray ja = new JSONArray();
         cu.findAll(MethodCallExpr.class).stream()
                 .filter(f->f.getArguments().size() > 1)
                 .forEach(f -> {
-                    JSONObject jo = new JSONObject();
-                    jo.put("base", "");
-                    jo.put("callee", getNameOfASTNode(f, pathname));
+                    JSONObject jo =  getNameOfASTNode(f, pathname);
+                    //jo.put("base", "");
+                    //jo.put("callee", getNameOfASTNode(f, pathname));
                     ja.add(jo);
                 });
 
+        try {
+            // Constructs a FileWriter given a file name, using the platform's default charset
+            callfile = new FileWriter("call01.json");
+            callfile.write(ja.toJSONString());
+            System.out.println("Successfully Copied JSON Object to File...");
+            System.out.println("\nJSON Object: " + ja);
 
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        } finally {
+
+            try {
+                callfile.flush();
+                callfile.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        JSONParser parser = new JSONParser();
+        Set<String> hash_Set = new HashSet<String>();
+        try {
+            Object obj = parser.parse(new FileReader("call01.json"));
+
+            // A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
+            //JSONObject jsonObject = (JSONObject) obj;
+
+            // A JSON array. JSONObject supports java.util.List interface.
+            JSONArray callsList = (JSONArray) obj;//jsonObject.get(null);
+
+            // An iterator over a collection. Iterator takes the place of Enumeration in the Java Collections Framework.
+            // Iterators differ from enumerations in two ways:
+            // 1. Iterators allow the caller to remove elements from the underlying collection during the iteration with well-defined semantics.
+            // 2. Method names have been improved.
+            Iterator<JSONObject> iterator = callsList.iterator();
+            while (iterator.hasNext()) {
+                JSONObject call = iterator.next();
+                JSONArray arguments = (JSONArray) call.get("arguments");
+                for (int j=0; j < arguments.size(); j++){
+                    String arg = arguments.get(j).toString();
+                    hash_Set.add(arg);
+                }
+            }
+            Iterator<String> iterator1 = hash_Set.iterator();
+            JSONArray tokens = new JSONArray();
+            while (iterator1.hasNext()) {
+                String token = iterator1.next();
+                tokens.add(token);
+            }
+
+            try {
+                // Constructs a FileWriter given a file name, using the platform's default charset
+                callfile = new FileWriter("tokens.json");
+                callfile.write(tokens.toJSONString());
+                System.out.println("Successfully Copied JSON Object to File...");
+                System.out.println("\nJSON Object: " + tokens);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            } finally {
+
+                try {
+                    callfile.flush();
+                    callfile.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if(1==1){
             return;
         }
