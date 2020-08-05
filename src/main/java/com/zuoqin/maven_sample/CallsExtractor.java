@@ -92,6 +92,79 @@ public class CallsExtractor {
         //if (node.getClass().getSimpleName() == "UpdateExpression") return getNameOfASTNode(node.argument);
         return res;
     }
+    public static void create_tokens(){
+        JSONParser parser = new JSONParser();
+        Set<String> hash_Set = new HashSet<String>();
+        try {
+            Object obj = parser.parse(new FileReader("call01.json"));
+
+            // A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
+            //JSONObject jsonObject = (JSONObject) obj;
+
+            // A JSON array. JSONObject supports java.util.List interface.
+            JSONArray callsList = (JSONArray) obj;//jsonObject.get(null);
+            Iterator<JSONObject> iterator = callsList.iterator();
+            while (iterator.hasNext()) {
+                JSONObject call = iterator.next();
+                JSONArray arguments = (JSONArray) call.get("arguments");
+                for (int j=0; j < arguments.size(); j++){
+                    String arg = arguments.get(j).toString();
+                    hash_Set.add(arg);
+                }
+            }
+            Iterator<String> iterator1 = hash_Set.iterator();
+            JSONArray tokens = new JSONArray();
+            while (iterator1.hasNext()) {
+                String token = iterator1.next();
+                tokens.add(token);
+            }
+
+            try {
+                // Constructs a FileWriter given a file name, using the platform's default charset
+                callfile = new FileWriter("tokens.json");
+                callfile.write(tokens.toJSONString());
+                System.out.println("Successfully Copied JSON Object to File...");
+                System.out.println("\nJSON Object: " + tokens);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            } finally {
+
+                try {
+                    callfile.flush();
+                    callfile.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void create_calls(JSONArray ja){
+        try {
+            // Constructs a FileWriter given a file name, using the platform's default charset
+            callfile = new FileWriter("call01.json");
+            callfile.write(ja.toJSONString());
+            System.out.println("Successfully Copied JSON Object to File...");
+            System.out.println("\nJSON Object: " + ja);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        } finally {
+
+            try {
+                callfile.flush();
+                callfile.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
     public static void main(String[] args) throws FileNotFoundException {
         // JavaParser has a minimal logging class that normally logs nothing.
         // Let's ask it to write to standard out:
@@ -148,80 +221,8 @@ public class CallsExtractor {
                     ja.add(jo);
                 });
 
-        try {
-            // Constructs a FileWriter given a file name, using the platform's default charset
-            callfile = new FileWriter("call01.json");
-            callfile.write(ja.toJSONString());
-            System.out.println("Successfully Copied JSON Object to File...");
-            System.out.println("\nJSON Object: " + ja);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-
-        } finally {
-
-            try {
-                callfile.flush();
-                callfile.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        JSONParser parser = new JSONParser();
-        Set<String> hash_Set = new HashSet<String>();
-        try {
-            Object obj = parser.parse(new FileReader("call01.json"));
-
-            // A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
-            //JSONObject jsonObject = (JSONObject) obj;
-
-            // A JSON array. JSONObject supports java.util.List interface.
-            JSONArray callsList = (JSONArray) obj;//jsonObject.get(null);
-
-            // An iterator over a collection. Iterator takes the place of Enumeration in the Java Collections Framework.
-            // Iterators differ from enumerations in two ways:
-            // 1. Iterators allow the caller to remove elements from the underlying collection during the iteration with well-defined semantics.
-            // 2. Method names have been improved.
-            Iterator<JSONObject> iterator = callsList.iterator();
-            while (iterator.hasNext()) {
-                JSONObject call = iterator.next();
-                JSONArray arguments = (JSONArray) call.get("arguments");
-                for (int j=0; j < arguments.size(); j++){
-                    String arg = arguments.get(j).toString();
-                    hash_Set.add(arg);
-                }
-            }
-            Iterator<String> iterator1 = hash_Set.iterator();
-            JSONArray tokens = new JSONArray();
-            while (iterator1.hasNext()) {
-                String token = iterator1.next();
-                tokens.add(token);
-            }
-
-            try {
-                // Constructs a FileWriter given a file name, using the platform's default charset
-                callfile = new FileWriter("tokens.json");
-                callfile.write(tokens.toJSONString());
-                System.out.println("Successfully Copied JSON Object to File...");
-                System.out.println("\nJSON Object: " + tokens);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-
-            } finally {
-
-                try {
-                    callfile.flush();
-                    callfile.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        create_calls(ja);
+        create_tokens();
         if(1==1){
             return;
         }
