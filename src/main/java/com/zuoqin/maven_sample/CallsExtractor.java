@@ -24,6 +24,11 @@ import java.util.*;
 
 public class CallsExtractor {
     private static FileWriter callfile;
+
+    public CallsExtractor() {
+        matchingFiles = new String[110];
+    }
+
     public static JSONObject getNameOfASTNode(com.github.javaparser.ast.Node node, String pathname) {
         JSONObject res = new JSONObject();
         MethodCallExpr expr1 = (MethodCallExpr) node;
@@ -165,11 +170,12 @@ public class CallsExtractor {
             }
         }
     }
-    public static void main(String[] args) throws FileNotFoundException {
+
+    public static void calculateFile(String pathname) throws FileNotFoundException {
         // JavaParser has a minimal logging class that normally logs nothing.
         // Let's ask it to write to standard out:
         Log.setAdapter(new Log.StandardOutStandardErrorAdapter());
-        
+
         // SourceRoot is a tool that read and writes Java files from packages on a certain root directory.
         // In this case the root directory is found by taking the root from the current Maven module,
         // with src/main/resources appended.
@@ -183,7 +189,6 @@ public class CallsExtractor {
         // Configure JavaParser to use type resolution
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
-        String pathname = "src\\main\\resources\\Blabla.java";
         File file = new File(pathname);
 
         //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
@@ -238,6 +243,53 @@ public class CallsExtractor {
                 return super.visit(n, arg);
             }
         }, null);
+    }
+    private String matchingFiles[];
+    public void walk( String path, int index ) {
 
+        File root = new File( path );
+        File[] list = root.listFiles();
+        if(index >= 99){
+            return;
+        }
+        if (list == null) return;
+
+        for ( File f : list ) {
+            if ( f.isDirectory() ) {
+                walk( f.getAbsolutePath(), index );
+                System.out.println( "Dir:" + f.getAbsoluteFile() );
+            }
+            else {
+                System.out.println( "File:" + f.getAbsoluteFile() );
+                if(f.getAbsoluteFile().toString().contains(".java")){
+                    matchingFiles[index] = String.valueOf(f.getAbsoluteFile());
+
+                    if(index >= 99){
+                        break;
+                    } else{
+                        index += 1;
+                    }
+                }
+
+
+            }
+        }
+    }
+    public static void main(String[] args) throws FileNotFoundException {
+
+        String pathname = "src\\main\\resources\\Blabla.java";
+        File f = new File("D:\\tmp\\camel-master");
+        CallsExtractor theCaller = new CallsExtractor();
+        theCaller.walk("D:\\tmp\\camel-master", 0);
+//        File[] matchingFiles = f.listFiles(new FilenameFilter() {
+//            public boolean accept(File dir, String name) {
+//                return name.endsWith("java");
+//            }
+//        });
+        File root = new File( "D:\\tmp\\camel-master" );
+
+        for(int i=0; i<theCaller.matchingFiles.length; i++){
+            calculateFile(theCaller.matchingFiles[i]);
+        }
     }
 }
