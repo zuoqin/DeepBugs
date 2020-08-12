@@ -20,6 +20,9 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class CallsExtractor {
@@ -43,17 +46,22 @@ public class CallsExtractor {
         JSONArray args = new JSONArray();
         JSONArray argTypes = new JSONArray();
         for(int o=0; o<expr1.getArguments().size(); o++){
-            argTypes.add(expr1.getArguments().get(o).calculateResolvedType().describe());
+            try{
+                argTypes.add(expr1.getArguments().get(o).calculateResolvedType().describe());
+            } catch (Exception e){
+                argTypes.add("Unknown");
+            }
             if(expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.StringLiteralExpr" ||
                     expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.IntegerLiteralExpr"
             ){
                 String arg = expr1.getArguments().get(o).toString();
                 args.add("LIT:" + arg);
             }
-            else if(expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.NameExpr"){
-                NameExpr expr = (NameExpr) expr1.getArguments().get(o);
+            else if(expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.NameExpr" ||
+                expr1.getArguments().get(o).getClass().getName() == "com.github.javaparser.ast.expr.FieldAccessExpr"){
+                //NameExpr expr = (NameExpr) expr1.getArguments().get(o);
                 //System.out.println(childNode);
-                String arg = expr.calculateResolvedType().describe();
+                //String arg = expr.calculateResolvedType().describe();
                 args.add("ID:" + expr1.getArguments().get(o).toString());
             }
 
@@ -225,26 +233,14 @@ public class CallsExtractor {
                     //jo.put("callee", getNameOfASTNode(f, pathname));
                     ja.add(jo);
                 });
+        res.add(ja);
+        //create_calls(ja);
+        //create_tokens();
 
-        create_calls(ja);
-        create_tokens();
-        if(1==1){
-            return;
-        }
-        cu.accept(new ModifierVisitor<Void>() {
-            /**
-             * For every if-statement, see if it has a comparison using "!=".
-             * Change it to "==" and switch the "then" and "else" statements around.
-             */
-            @Override
-            public Visitable visit(MethodCallExpr n, Void arg) {
-                System.out.println(n.getScope() + " - " + n.getName());
-
-                return super.visit(n, arg);
-            }
-        }, null);
+        return;
     }
     private String matchingFiles[];
+    public static CopyOnWriteArrayList<JSONArray> res = new CopyOnWriteArrayList<>();
     public void walk( String path, int index ) {
 
         File root = new File( path );
@@ -257,10 +253,10 @@ public class CallsExtractor {
         for ( File f : list ) {
             if ( f.isDirectory() ) {
                 walk( f.getAbsolutePath(), index );
-                System.out.println( "Dir:" + f.getAbsoluteFile() );
+                //System.out.println( "Dir:" + f.getAbsoluteFile() );
             }
             else {
-                System.out.println( "File:" + f.getAbsoluteFile() );
+                //System.out.println( "File:" + f.getAbsoluteFile() );
                 if(f.getAbsoluteFile().toString().contains(".java")){
                     matchingFiles[index] = String.valueOf(f.getAbsoluteFile());
 
@@ -287,9 +283,31 @@ public class CallsExtractor {
 //            }
 //        });
         File root = new File( "D:\\tmp\\camel-master" );
+        ThreadPoolExecutor executor =
+                (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
 
-        for(int i=0; i<theCaller.matchingFiles.length; i++){
-            calculateFile(theCaller.matchingFiles[i]);
+        for(int i=0; i<2; i++){
+            int finalI = i;
+            executor.submit(() -> {
+                //Thread.sleep(1000);
+                calculateFile(theCaller.matchingFiles[finalI]);
+                return null;
+            });
         }
+        executor.shutdown();
+        int size = executor.getActiveCount();
+        while(size > 0){
+            size = executor.getActiveCount();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        for(int i=0; i<theCaller.res.size(); i++){
+            JSONArray arr = theCaller.res.get(i);
+            System.out.println(arr);
+        }
+
     }
 }
