@@ -304,10 +304,21 @@ public class CallsExtractor {
                 e.printStackTrace();
             }
         }
+        JSONArray res = new JSONArray();
         for(int i=0; i<theCaller.res.size(); i++){
+            JSONArray resfile = new JSONArray();
             JSONArray arr = theCaller.res.get(i);
-            System.out.println(arr);
+            for(int k=0; k< arr.size(); k++){
+                JSONArray args1 = (JSONArray)((JSONObject) arr.get(k)).get("arguments");
+                for(int q=0; q<args1.size(); q++){
+                    resfile.add(args1.get(q));
+                }
+                System.out.println(arr.get(k));
+            }
+            if(resfile.size() > 0){
+                res.add(resfile);
+            }
         }
-
+        System.out.println(res);
     }
 }
