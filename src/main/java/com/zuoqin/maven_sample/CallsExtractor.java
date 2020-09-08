@@ -179,6 +179,51 @@ public class CallsExtractor {
         }
     }
 
+    public static void testMethodImplementation(String pathname) throws FileNotFoundException {
+        // JavaParser has a minimal logging class that normally logs nothing.
+        // Let's ask it to write to standard out:
+        Log.setAdapter(new Log.StandardOutStandardErrorAdapter());
+
+        // SourceRoot is a tool that read and writes Java files from packages on a certain root directory.
+        // In this case the root directory is found by taking the root from the current Maven module,
+        // with src/main/resources appended.
+
+        //SourceRoot sourceRoot = new SourceRoot(CodeGenerationUtils.mavenModuleRoot(CallsExtractor.class).resolve("src/main/resources"));
+
+        // Set up a minimal type solver that only looks at the classes used to run this sample.
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        combinedTypeSolver.add(new ReflectionTypeSolver());
+
+        // Configure JavaParser to use type resolution
+        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
+        StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
+        File file = new File(pathname);
+
+        //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
+        //JavaParser jp = new JavaParser(config);
+        //ParseResult<CompilationUnit> pcu = jp.parse(file);
+        CompilationUnit cu = StaticJavaParser.parse(file);
+        //ParseUtils.compilationUnit(resultJavaFile).getChildNodesByType(MethodDeclaration.class).forEach(md->{
+        //    md.getType();
+        //});
+
+
+        JSONArray ja = new JSONArray();
+        cu.findAll(MethodDeclaration.class).stream()
+                .filter(f->f.getName().asString().length() > 1)
+                .forEach(f -> {
+                    String s = f.getDeclarationAsString().toString() + f.getBody().toString();
+                    s = s.replace("Optional[", "");
+                    s = s.substring(0, s.length()-1);
+                    System.out.println(s);
+                });
+        res.add(ja);
+        //create_calls(ja);
+        //create_tokens();
+
+        return;
+    }
+
     public static void calculateFile(String pathname) throws FileNotFoundException {
         // JavaParser has a minimal logging class that normally logs nothing.
         // Let's ask it to write to standard out:
@@ -274,6 +319,10 @@ public class CallsExtractor {
     public static void main(String[] args) throws FileNotFoundException {
 
         String pathname = "src\\main\\resources\\Blabla.java";
+        testMethodImplementation(pathname);
+        if(1==1){
+            return;
+        }
         File f = new File("D:\\tmp\\camel-master");
         CallsExtractor theCaller = new CallsExtractor();
         theCaller.walk("D:\\tmp\\camel-master", 0);
