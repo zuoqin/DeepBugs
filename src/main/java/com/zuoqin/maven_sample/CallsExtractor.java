@@ -199,14 +199,7 @@ public class CallsExtractor {
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
         File file = new File(pathname);
 
-        //ParserConfiguration config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new CombinedTypeSolver()));
-        //JavaParser jp = new JavaParser(config);
-        //ParseResult<CompilationUnit> pcu = jp.parse(file);
         CompilationUnit cu = StaticJavaParser.parse(file);
-        //ParseUtils.compilationUnit(resultJavaFile).getChildNodesByType(MethodDeclaration.class).forEach(md->{
-        //    md.getType();
-        //});
-
 
         JSONArray ja = new JSONArray();
         cu.findAll(MethodDeclaration.class).stream()
@@ -217,10 +210,6 @@ public class CallsExtractor {
                     s = s.substring(0, s.length()-1);
                     System.out.println(s);
                 });
-        res.add(ja);
-        //create_calls(ja);
-        //create_tokens();
-
         return;
     }
 
